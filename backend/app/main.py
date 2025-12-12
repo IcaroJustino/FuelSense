@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from core.config import settings
 from core.database import init_db
-from routes import health
+from routes import coletas,health
 
 app = FastAPI(
     title=settings.API_TITLE,
@@ -11,6 +11,7 @@ app = FastAPI(
 )
 
 app.include_router(health.router, prefix="/api/v1")
+app.include_router(coletas.router, prefix="/api/v1/coletas")
 
 @app.get("/")
 def read_root():

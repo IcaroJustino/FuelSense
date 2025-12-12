@@ -4,4 +4,4 @@ pydantic-settings
 SQLAlchemy
 psycopg2-binary 
 faker         
-requests     
+requests
