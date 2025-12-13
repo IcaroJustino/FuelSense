@@ -1,12 +1,17 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException, Security
+from fastapi.security import HTTPBearer 
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from sqlalchemy import or_, desc 
+
+# Importações Absolutas
 from core.database import get_db, ColetaModel
+from core.auth_deps import CurrentUser 
 from models.coleta import Coleta, ColetaMotoristaResponse 
 
 router = APIRouter(
-    tags=["Motoristas"]
+    tags=["Motoristas"],
+    dependencies=[Security(HTTPBearer())] 
 )
 
 
@@ -16,9 +21,10 @@ router = APIRouter(
     summary="Busca o histórico de abastecimento filtrando por CPF ou Nome do motorista."
 )
 def get_historico_motorista(
+    current_user: CurrentUser,
+    db: Session = Depends(get_db),
     cpf: Optional[str] = Query(None, description="Filtrar por CPF (exato)."),
     nome: Optional[str] = Query(None, description="Filtrar por nome (busca parcial, case-insensitive)."),
-    db: Session = Depends(get_db)
 ):
 
     
@@ -50,9 +56,10 @@ def get_historico_motorista(
     summary="Lista todas as coletas ordenadas pelo maior volume de abastecimento."
 )
 def get_ranking_abastecimento(
+    current_user: CurrentUser,
     db: Session = Depends(get_db)
 ):
-  
+ 
     query = db.query(ColetaModel)
     
     coletas = query.order_by(desc(ColetaModel.volume_vendido)).all()
