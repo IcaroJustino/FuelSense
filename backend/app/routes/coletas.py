@@ -32,8 +32,8 @@ def create_coleta(coleta: ColetaCreate, db: Session = Depends(get_db)):
 def read_coletas(
 
     #paginação (offset / limit)
-    skip: int = 0,         
-    limit: int = 100,      
+    skip: int = 0,      
+    limit: int = 100,     
     
     #Filtros optativos para o dashboard
     tipo_combustivel: Optional[FuelType] = None, 
