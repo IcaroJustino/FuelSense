@@ -3,7 +3,9 @@ from fastapi import APIRouter
 from typing import Dict
 from core.database import engine 
 
-router = APIRouter()
+router = APIRouter(
+    tags=["Health Check"]
+)
 
 #HealthCheck da Saude da API e do Banco de Dados
 @router.get("/health", response_model=Dict[str, str], tags=["Health Check"])
