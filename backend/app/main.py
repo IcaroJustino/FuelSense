@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from core.config import settings
 from core.database import init_db
-from routes import coletas,health,motoristas
 from routes import coletas,health,motoristas,dashboard
 
 app = FastAPI(
