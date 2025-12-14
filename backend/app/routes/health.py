@@ -1,4 +1,3 @@
-# backend/app/routes/health.py
 from fastapi import APIRouter
 from typing import Dict
 from core.database import engine 
@@ -7,7 +6,6 @@ router = APIRouter(
     tags=["Health Check"]
 )
 
-#HealthCheck da Saude da API e do Banco de Dados
 @router.get("/health", response_model=Dict[str, str], tags=["Health Check"])
 def health_check():
     db_status = "error"

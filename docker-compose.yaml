@@ -3,7 +3,6 @@ version: '3.8'
 services:
   db:
     image: postgres:15-alpine
-    # ... (restante da configuração do DB inalterada)
     restart: always
     environment:
       POSTGRES_USER: user_api
@@ -30,19 +29,14 @@ services:
       - ./backend/app:/app 
       - ./backend/requirements.txt:/app/requirements.txt
     
-    # 🚨 NOVO: Variáveis de Ambiente para a API
     environment:
-      # Credenciais do Banco de Dados (usadas por settings.py para construir DATABASE_URL)
       DB_USER: user_api
       DB_PASSWORD: senha_secreta
       DB_NAME: user_api
-      DB_HOST: db   # Usa o nome do serviço Docker Compose como hostname
+      DB_HOST: db
       DB_PORT: 5432
 
-      # 🚨 VARIÁVEIS DE SEGURANÇA OBRIGATÓRIAS PARA AUTENTICAÇÃO
-      # Mude 'SUA_CHAVE_SECRETA_MUITO_LONGA_E_ALEATORIA' por uma string gerada de verdade!
       SECRET_KEY: SUA_CHAVE_SECRETA_MUITO_LONGA_E_ALEATORIA
-      # Exemplo: 30 minutos
       ACCESS_TOKEN_EXPIRE_MINUTES: 30 
       
     depends_on:

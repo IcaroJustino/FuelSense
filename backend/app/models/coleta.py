@@ -14,6 +14,7 @@ class ColetaBase(BaseModel):
     posto_nome: str
     cidade: str
     estado: str
+    # 🚨 CAMPO MANTIDO COMO DATETIME NA BASE PARA O DTO DE ENTRADA (POST)
     data_coleta: datetime = Field(..., description="Data e hora da coleta.")
     tipo_combustivel: FuelType
     preco_venda: condecimal(max_digits=10, decimal_places=2) = Field(..., gt=0, description="Preço por litro em Reais.")
@@ -24,26 +25,26 @@ class ColetaBase(BaseModel):
     tipo_veiculo: VehicleType
 
 
-# DTO de CREATE
+# DTO de CREATE (Entrada)
 class ColetaCreate(ColetaBase):
     """Schema para validação do payload de criação (POST)."""
+    # Herda data_coleta: datetime
     pass
 
 
-# DTO de RESPOSTA COMPLETA (Para uso interno ou ranking)
+# DTO de RESPOSTA COMPLETA (Saída)
 class Coleta(ColetaBase):
-    """Schema para o retorno da API. Inclui o ID e configura o SQLAlchemy."""
+    """Schema para o retorno da API. Inclui o ID e define data_coleta como string formatada."""
     id: int # ID gerado pelo banco de dados
     
-    # Configuração Pydantic para interagir com o SQLAlchemy
+    # 🚨 SOBRESCRITA ESSENCIAL: Define data_coleta como STRING para receber a saída do SQL TO_CHAR
+    data_coleta: str = Field(..., description="Data e hora da coleta formatada (AAAA-MM-DD HH:MI).")
+    
     class Config:
-        # Permite que o Pydantic leia atributos de objetos de modelo SQLAlchemy 
         from_attributes = True 
+        # json_encoders não é mais necessário aqui, pois data_coleta é string.
+        # Omitir json_encoders para datetime é o ideal.
         
-        json_encoders = {
-            datetime: lambda dt: dt.isoformat()
-        }
-
 # DTO de PUT/PATCH
 class ColetaUpdate(BaseModel):
     """Schema para atualização parcial de dados (PUT/PATCH)."""
@@ -63,7 +64,10 @@ class ColetaMotoristaResponse(BaseModel):
     motorista_nome: str
     veiculo_placa: str
     tipo_veiculo: VehicleType
-    data_coleta: datetime = Field(..., description="Data e hora da coleta.")
+    
+    # 🚨 SOBRESCRITA ESSENCIAL: Define data_coleta como STRING
+    data_coleta: str = Field(..., description="Data e hora da coleta formatada (AAAA-MM-DD HH:MI).")
+    
     tipo_combustivel: FuelType
     preco_venda: condecimal(max_digits=10, decimal_places=2) = Field(..., gt=0, description="Preço por litro em Reais.")
     volume_vendido: condecimal(max_digits=10, decimal_places=2) = Field(..., gt=0, description="Volume vendido em litros.")
@@ -71,9 +75,7 @@ class ColetaMotoristaResponse(BaseModel):
     posto_nome: str
     cidade: str
     estado: str
+    
     class Config:
         from_attributes = True
-        
-        json_encoders = {
-            datetime: lambda dt: dt.isoformat()
-        }
+        # json_encoders não é mais necessário aqui.

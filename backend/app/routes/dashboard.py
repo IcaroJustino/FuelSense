@@ -1,16 +1,17 @@
-from fastapi import APIRouter, Depends, Query, Security 
+from fastapi import APIRouter, Depends, Query, Security, status
 from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
-from sqlalchemy import func, cast, Date 
+from sqlalchemy import func, desc 
 from typing import List, Optional
 
 from core.database import get_db, ColetaModel
-from core.auth_deps import CurrentUser 
+from core.authguard import CurrentUser 
 from models.coleta import FuelType 
 from models.kpis import (
     MediaPrecoCombustivel, 
     VolumeConsumidoVeiculo, 
-    PrecoHistoricoResponse
+    PrecoHistoricoResponse,
+    PostoRankingEstado 
 )
 
 router = APIRouter(
@@ -18,11 +19,10 @@ router = APIRouter(
     dependencies=[Security(HTTPBearer())]
 )
 
-# Função auxiliar para converter Tupla em dicionário
+DATE_ONLY_FORMAT_STRING = 'YYYY-MM-DD' 
+
 def row_to_dict(row):
     return dict(row._mapping)
-
-
 
 # Média de Preço por Tipo de Combustível
 @router.get(
@@ -84,12 +84,14 @@ def get_historico_preco_combustivel(
     
     tipo_combustivel: Optional[FuelType] = Query(
         None, 
-        description="Filtra o histórico pelo tipo de combustível (ex: Gasolina, Etanol, Diesel S10)"
+        description="Filtra o histórico pelo tipo de combustível "
     )
 ):
     
+    data_campo_formatado = func.to_char(ColetaModel.data_coleta, DATE_ONLY_FORMAT_STRING).label('data_coleta')
+    
     query = db.query(
-        cast(ColetaModel.data_coleta, Date).label('data_coleta'),
+        data_campo_formatado,
         ColetaModel.tipo_combustivel,
         func.round(func.avg(ColetaModel.preco_venda), 2).label('preco_medio_arredondado')
     )
@@ -99,11 +101,54 @@ def get_historico_preco_combustivel(
     
     historico_precos = (
         query
-        .group_by('data_coleta', ColetaModel.tipo_combustivel)
-        .order_by('data_coleta')
+        .group_by(data_campo_formatado, ColetaModel.tipo_combustivel)
+        .order_by(data_campo_formatado)
         .all()
     )
     
     data_dicts = [row_to_dict(item) for item in historico_precos]
 
     return [PrecoHistoricoResponse.model_validate(item) for item in data_dicts]
+
+
+@router.get(
+    "/ranking-coletas-por-estado", 
+    response_model=List[PostoRankingEstado], 
+    summary="Retorna os postos que mais tiveram coletas, agrupados por estado"
+)
+def get_ranking_coletas_por_estado(
+    current_user: CurrentUser,
+    db: Session = Depends(get_db),
+    estado: Optional[str] = Query(
+        None, 
+        min_length=2, 
+        max_length=2, 
+        description="Filtrar por sigla do estado (ex: SP, MG, RJ)"
+    )
+):
+    
+    query = db.query(
+        ColetaModel.estado,
+        ColetaModel.posto_nome,
+        func.count(ColetaModel.id).label('total_coletas')
+    )
+
+    if estado:
+        query = query.filter(ColetaModel.estado.ilike(estado))
+    
+    ranking_coletas = (
+        query
+        .group_by(ColetaModel.estado, ColetaModel.posto_nome)
+        .order_by(
+            ColetaModel.estado, 
+            desc(func.count(ColetaModel.id))
+        )
+        .all()
+    )
+    
+    if not ranking_coletas:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nenhuma coleta encontrada")
+    
+    data_dicts = [row_to_dict(item) for item in ranking_coletas]
+
+    return [PostoRankingEstado.model_validate(item) for item in data_dicts]

@@ -1,5 +1,3 @@
-#!/bin/sh
-
 HOST="db"
 PORT="5432"
 MAX_RETRIES=15

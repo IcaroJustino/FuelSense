@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from typing import Literal
 from core.database import SessionLocal,ColetaModel
 from core.security import get_password_hash
-from core.auth_deps import UserModel 
+from core.authguard import UserModel 
 
 
 FuelType = Literal["Gasolina", "Etanol", "Diesel S10"]
