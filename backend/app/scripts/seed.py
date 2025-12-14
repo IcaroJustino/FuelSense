@@ -1,70 +1,108 @@
-import sys
-import os
+from sqlalchemy.orm import Session
 from faker import Faker
 import random
-from decimal import Decimal 
-from typing import get_args 
-# Garantir que o Work folder seja alinhado com o python para rodar o seed dentro do container Docker
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from core.database import SessionLocal, ColetaModel
-from models.coleta import FuelType, VehicleType 
+from datetime import datetime, timedelta
+from typing import Literal
+from core.database import SessionLocal,ColetaModel
+from core.security import get_password_hash
+from core.authguard import UserModel 
 
 
-fake = Faker('pt_BR')
-NUM_REGISTROS = 50
+FuelType = Literal["Gasolina", "Etanol", "Diesel S10"]
+VehicleType = Literal["Carro", "Moto", "Caminhão Leve", "Carreta", "Ônibus"]
 
 
-def generate_random_data():
+ADMIN_USER_DATA = {
+    "nome": "Admin Teste",
+    "email": "admin@teste.com",
+    "senha_plana": "123456", 
+    "cpf": "123.456.789-00",
+    "coreid": "CORE-ADMIN-001"
+}
+
+def seed_admin_user(session: Session):
+    print("\n--- Tentando seed do usuário Admin ---")
     
-    valores_combustiveis = list(get_args(FuelType))
-    valores_veiculos = list(get_args(VehicleType))
-    
-    return {
-        "posto_identificador": fake.bothify(text='###########-##'),
-        "posto_nome": fake.company(),
-        "cidade": fake.city(),
-        "estado": fake.state_abbr(),
-        "data_coleta": fake.date_time_this_year(), 
-        "tipo_combustivel": random.choice(valores_combustiveis),
-        "preco_venda": Decimal(round(random.uniform(4.5, 8.0), 2)),
-        "volume_vendido": Decimal(round(random.uniform(20, 100), 2)),
-        "motorista_nome": fake.name(),
-        "motorista_cpf": fake.bothify(text='###.###.###-##'),
-        "veiculo_placa": fake.bothify(text='AAA####'),
-        "tipo_veiculo": random.choice(valores_veiculos)
-    }
+    if session.query(UserModel).filter(UserModel.email == ADMIN_USER_DATA["email"]).first():
+        print(f"AVISO: Usuário Admin ({ADMIN_USER_DATA['email']}) já existe. Pulando seed de usuário.")
+        return
 
-def run_seeder():
-    print(f"\n--- Iniciando script de Seed de dados ({NUM_REGISTROS} registros) ---")
-    session = None 
     try:
-        # Iniciar Sessão no DB
-        session = SessionLocal()
+        # Senha ja com hash
+        senha_hash = get_password_hash(ADMIN_USER_DATA["senha_plana"])
         
-        # Verifica se a tabela já possui dados (não faz sentido rodar isso em produção)
-        count = session.query(ColetaModel).count()
-        if count > 0:
-            print(f"AVISO: Tabela 'coletas' já contém {count} registros. Pulando seed.")
-            return
-
-        for i in range(NUM_REGISTROS):
-            data = generate_random_data()
-            db_coleta = ColetaModel(**data)
-            session.add(db_coleta)
-            if (i + 1) % 10 == 0:
-                print(f"Inserindo registro {i + 1}/{NUM_REGISTROS}...")
-
+        admin_user = UserModel(
+            nome=ADMIN_USER_DATA["nome"],
+            email=ADMIN_USER_DATA["email"],
+            senha_hash=senha_hash, 
+            cpf=ADMIN_USER_DATA["cpf"],
+            coreid=ADMIN_USER_DATA["coreid"]
+        )
+        
+        session.add(admin_user)
         session.commit()
-        print(f"SUCESSO: {NUM_REGISTROS} registros inseridos diretamente via SQLAlchemy.")
-
-    except Exception as e:
-        print(f"\nERRO FATAL durante o seed: {e}") 
-        if session:
-            session.rollback()
+        print(f"SUCESSO: Usuário Admin ({ADMIN_USER_DATA['email']}) inserido com sucesso (Senha: 123456).")
         
-    finally:
-        if session:
-            session.close()
+    except Exception as e:
+        session.rollback()
+        print(f"ERRO FATAL ao criar usuário Admin: {e}")
+        
+
+def seed_test_data(session: Session, num_coletas: int = 50):
+    print(f"\n--- Gerando {num_coletas} Coletas de Teste ---")
+    fake = Faker('pt_BR')
+    
+    fuel_types = list(FuelType.__args__)
+    vehicle_types = list(VehicleType.__args__)
+    
+    cidades = ["São Paulo", "Rio de Janeiro", "Belo Horizonte", "Curitiba", "Porto Alegre"]
+    estados = ["SP", "RJ", "MG", "PR", "RS"]
+
+    for i in range(num_coletas):
+        
+        tipo_combustivel = random.choice(fuel_types)
+        tipo_veiculo = random.choice(vehicle_types)
+        
+        indice_local = random.randint(0, len(cidades) - 1)
+        cidade = cidades[indice_local]
+        estado = estados[indice_local]
+        
+        preco_base = random.uniform(4.5, 7.0)
+        preco_venda = round(preco_base + random.uniform(-0.5, 0.5), 2)
+        volume_vendido = round(random.uniform(50, 400), 2)
+        
+        data_coleta = datetime.now() - timedelta(days=random.randint(1, 30), hours=random.randint(1, 24))
+
+        coleta = ColetaModel(
+            data_coleta=data_coleta,
+            motorista_nome=fake.name(),
+            motorista_cpf=fake.cpf(),
+            tipo_combustivel=tipo_combustivel,
+            tipo_veiculo=tipo_veiculo,
+            posto_identificador=fake.cnpj(), 
+            posto_nome=fake.company(),
+            cidade=cidade,
+            estado=estado,
+            preco_venda=preco_venda,
+            volume_vendido=volume_vendido,
+            veiculo_placa=fake.license_plate(), 
+        )
+        session.add(coleta)
+        
+    try:
+        session.commit()
+        print("SUCESSO: Coletas de teste inseridas.")
+    except Exception as e:
+        session.rollback()
+        print(f"ERRO FATAL ao inserir coletas de teste: {e}")
+
+def main_seed():
+    db = SessionLocal()
+    
+    seed_admin_user(db)
+    seed_test_data(db)
+    
+    db.close()
 
 if __name__ == "__main__":
-    run_seeder()
+    main_seed()

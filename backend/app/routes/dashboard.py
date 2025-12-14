@@ -1,62 +1,60 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Security, status
+from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
-# Importa as funções para agregação, arredondamento e manipulação de data
-from sqlalchemy import func, cast, Date 
+from sqlalchemy import func, desc 
 from typing import List, Optional
 
-# Importações Absolutas
 from core.database import get_db, ColetaModel
-# Importa FuelType para tipagem do filtro
+from core.authguard import CurrentUser 
 from models.coleta import FuelType 
 from models.kpis import (
     MediaPrecoCombustivel, 
     VolumeConsumidoVeiculo, 
-    PrecoHistoricoResponse
+    PrecoHistoricoResponse,
+    PostoRankingEstado 
 )
 
 router = APIRouter(
-    tags=["Dashboard KPIs"]
+    tags=["Dashboard KPIs"],
+    dependencies=[Security(HTTPBearer())]
 )
 
-# Função auxiliar para converter Row (tupla nomeada) em dicionário
-# ESSENCIAL para o SQLAlchemy 1.x e Pydantic
+DATE_ONLY_FORMAT_STRING = 'YYYY-MM-DD' 
+
 def row_to_dict(row):
     return dict(row._mapping)
 
-
-## 🛣️ ENDPOINT 1: Média de Preço por Tipo de Combustível
+# Média de Preço por Tipo de Combustível
 @router.get(
     "/media-preco-combustivel", 
     response_model=List[MediaPrecoCombustivel], 
     summary="Calcula a média de preço por litro para cada tipo de combustível."
 )
 def get_media_preco_combustivel(
+    current_user: CurrentUser, 
     db: Session = Depends(get_db)
 ):
     
     medias_preco = (
         db.query(
             ColetaModel.tipo_combustivel, 
-            # Arredonda a média para 2 casas decimais diretamente no SQL
             func.round(func.avg(ColetaModel.preco_venda), 2).label('media_preco')
         )
         .group_by(ColetaModel.tipo_combustivel)
         .all()
     )
-    
-    # Converte os resultados do SQLAlchemy (Row/Tupla) para Dicionário
     data_dicts = [row_to_dict(item) for item in medias_preco]
-    
     return [MediaPrecoCombustivel.model_validate(item) for item in data_dicts]
 
 
-## 🛣️ ENDPOINT 2: Volume Total Consumido por Tipo de Veículo
+# Volume Consumido por Tipo de Veículo
 @router.get(
     "/volume-por-veiculo", 
     response_model=List[VolumeConsumidoVeiculo], 
     summary="Calcula o volume total consumido agrupado por tipo de veículo."
 )
 def get_volume_por_veiculo(
+    current_user: CurrentUser,
     db: Session = Depends(get_db)
 ):
 
@@ -69,51 +67,88 @@ def get_volume_por_veiculo(
         .all()
     )
     
-    # Converte os resultados do SQLAlchemy (Row/Tupla) para Dicionário
     data_dicts = [row_to_dict(item) for item in volume_por_veiculo]
     
     return [VolumeConsumidoVeiculo.model_validate(item) for item in data_dicts]
 
 
-## 🛣️ ENDPOINT 3: Histórico e Crescimento de Preço por Combustível com Filtro
+# Historico de Preço do Combustível
 @router.get(
     "/historico-preco-combustivel", 
     response_model=List[PrecoHistoricoResponse], 
     summary="Retorna o preço médio de cada tipo de combustível agrupado por dia (em ordem crescente), com filtro opcional por combustível."
 )
 def get_historico_preco_combustivel(
+    current_user: CurrentUser,
     db: Session = Depends(get_db),
+    
     tipo_combustivel: Optional[FuelType] = Query(
         None, 
-        description="Filtra o histórico pelo tipo de combustível (ex: Gasolina, Etanol, Diesel S10)"
+        description="Filtra o histórico pelo tipo de combustível "
     )
 ):
-    """
-    Calcula o preço médio de cada tipo de combustível, agrupado por dia
-    e ordenado pela data, aplicando um filtro se fornecido.
-    """
+    
+    data_campo_formatado = func.to_char(ColetaModel.data_coleta, DATE_ONLY_FORMAT_STRING).label('data_coleta')
     
     query = db.query(
-        # GARANTIA: Retorna apenas a data (sem hora) do banco de dados
-        cast(ColetaModel.data_coleta, Date).label('data_coleta'),
+        data_campo_formatado,
         ColetaModel.tipo_combustivel,
-        # Arredonda a média de preco_venda para 2 casas decimais
         func.round(func.avg(ColetaModel.preco_venda), 2).label('preco_medio_arredondado')
     )
-    
-    # Aplica o filtro se o combustível for fornecido
+
     if tipo_combustivel:
         query = query.filter(ColetaModel.tipo_combustivel == tipo_combustivel)
     
     historico_precos = (
         query
-        .group_by('data_coleta', ColetaModel.tipo_combustivel)
-        .order_by('data_coleta') # Ordem crescente pela data
+        .group_by(data_campo_formatado, ColetaModel.tipo_combustivel)
+        .order_by(data_campo_formatado)
         .all()
     )
     
-    # Converte os resultados do SQLAlchemy (Row/Tupla) para Dicionário
     data_dicts = [row_to_dict(item) for item in historico_precos]
-    
-    # O Pydantic irá validar o campo data_coleta como um objeto 'date'
+
     return [PrecoHistoricoResponse.model_validate(item) for item in data_dicts]
+
+
+@router.get(
+    "/ranking-coletas-por-estado", 
+    response_model=List[PostoRankingEstado], 
+    summary="Retorna os postos que mais tiveram coletas, agrupados por estado"
+)
+def get_ranking_coletas_por_estado(
+    current_user: CurrentUser,
+    db: Session = Depends(get_db),
+    estado: Optional[str] = Query(
+        None, 
+        min_length=2, 
+        max_length=2, 
+        description="Filtrar por sigla do estado (ex: SP, MG, RJ)"
+    )
+):
+    
+    query = db.query(
+        ColetaModel.estado,
+        ColetaModel.posto_nome,
+        func.count(ColetaModel.id).label('total_coletas')
+    )
+
+    if estado:
+        query = query.filter(ColetaModel.estado.ilike(estado))
+    
+    ranking_coletas = (
+        query
+        .group_by(ColetaModel.estado, ColetaModel.posto_nome)
+        .order_by(
+            ColetaModel.estado, 
+            desc(func.count(ColetaModel.id))
+        )
+        .all()
+    )
+    
+    if not ranking_coletas:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Nenhuma coleta encontrada")
+    
+    data_dicts = [row_to_dict(item) for item in ranking_coletas]
+
+    return [PostoRankingEstado.model_validate(item) for item in data_dicts]

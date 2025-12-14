@@ -33,6 +33,15 @@ class ColetaModel(Base):
     veiculo_placa = Column(String, index=True, nullable=False)
     tipo_veiculo = Column(String, nullable=False)
 
+class UserModel(Base):
+    __tablename__ = "usuarios"
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    senha_hash = Column(String, nullable=False) 
+    cpf = Column(String, unique=True, nullable=False)
+    coreid = Column(String, nullable=False)
+
 def init_db():
     Base.metadata.create_all(bind=engine)
 

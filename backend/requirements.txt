@@ -3,5 +3,10 @@ uvicorn[standard]
 pydantic-settings
 SQLAlchemy
 psycopg2-binary 
-faker         
-requests
+faker 
+requests 
+python-jose[cryptography]
+email-validator
+# FIX de compatibilidade de versão para resolver o erro de 72 bytes/AttributeError
+passlib
+bcrypt
