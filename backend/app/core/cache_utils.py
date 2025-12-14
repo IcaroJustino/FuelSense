@@ -67,14 +67,24 @@ def cached_data(cache_key_prefix: str, ttl: int = DEFAULT_TTL):
 
             if REDIS_CLIENT and db_result:
                 try:
+                    if isinstance(db_result, list):
+                        data_to_cache = [item.model_dump() for item in db_result]
+                    elif hasattr(db_result, 'model_dump'):
+                        data_to_cache = db_result.model_dump()
+                    else:
+                        data_to_cache = db_result
+
                     serialized_data = json.dumps(
-                        [item.model_dump() for item in db_result], 
+                        data_to_cache, 
                         default=json_default_converter
                     )
-                except AttributeError:
-                    serialized_data = json.dumps(db_result, default=json_default_converter) 
+                
+                except Exception as e:
+                    print(f"ERRO DE SERIALIZAÇÃO NO CACHE para {cache_key}: {e}")
+                    serialized_data = None 
                     
-                REDIS_CLIENT.setex(cache_key, ttl, serialized_data)
+                if serialized_data:
+                    REDIS_CLIENT.setex(cache_key, ttl, serialized_data)
                 
             return db_result
         
@@ -84,7 +94,8 @@ def cached_data(cache_key_prefix: str, ttl: int = DEFAULT_TTL):
 
 def invalidate_dashboard_cache(keys_to_delete: List[str]):
     if REDIS_CLIENT:
-        deleted_count = REDIS_CLIENT.delete(*keys_to_delete)
+        full_keys = [f"kpi_{key}" for key in keys_to_delete]
+        deleted_count = REDIS_CLIENT.delete(*full_keys)
         print(f"CACHE INVALIDATED: {deleted_count} chaves excluídas do Redis.")
     else:
         print("AVISO: Redis não está ativo. Não foi possível invalidar o cache.")

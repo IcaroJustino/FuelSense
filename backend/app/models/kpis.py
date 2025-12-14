@@ -33,3 +33,17 @@ class DashboardStatus(BaseModel):
     last_update_datetime: Optional[datetime] = Field(None, description="Datetime formatado da última ingestão de dados.")
     time_since_last_update_seconds: Optional[int] = Field(None, description="Tempo decorrido (em segundos) desde a última atualização.")
     friendly_status: str = Field(..., description="Mensagem amigável de status (ex: 'Atualizado há 5 minutos').")
+
+# Volume Total Consumido e Total de Abastecimentos
+class VolumeTotalConsumido(BaseModel):
+    volume_total: condecimal(max_digits=15, decimal_places=2) = Field(..., description="Soma total do volume vendido em litros.")
+    total_abastecimentos: int = Field(..., description="Contagem total de registros de coleta (abastecimentos).")
+
+# Maior Consumidor (Tipo de Veículo
+class MaiorConsumidor(BaseModel):
+    tipo_veiculo: str = Field(..., description="Tipo de veículo que mais consumiu.")
+    volume_total: condecimal(max_digits=15, decimal_places=2) = Field(..., description="Volume total consumido por este tipo de veículo.")
+
+# Receita Total Estimada
+class ReceitaTotalEstimada(BaseModel):
+    receita_total: condecimal(max_digits=15, decimal_places=2) = Field(..., description="Soma de (preco_venda * volume_vendido) em Reais.")
