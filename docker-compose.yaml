@@ -1,6 +1,18 @@
-version: '3.8'
 
 services:
+  redis:
+    image: redis:7-alpine 
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data 
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+    
   db:
     image: postgres:15-alpine
     restart: always
@@ -35,13 +47,18 @@ services:
       DB_NAME: user_api
       DB_HOST: db
       DB_PORT: 5432
+      REDIS_HOST: redis     
+      REDIS_PORT: 6379    
 
       SECRET_KEY: SUA_CHAVE_SECRETA_MUITO_LONGA_E_ALEATORIA
-      ACCESS_TOKEN_EXPIRE_MINUTES: 30 
+      ACCESS_TOKEN_EXPIRE_MINUTES: 10000 
       
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_started
+      redis:
+        condition: service_started
     
 volumes:
   postgres_data:
+  redis_data: 
