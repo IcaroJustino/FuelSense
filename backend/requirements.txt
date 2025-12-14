@@ -11,3 +11,6 @@ email-validator
 passlib
 bcrypt
 redis
+pytest
+httpx
+pytest-asyncio
