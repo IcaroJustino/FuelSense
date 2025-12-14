@@ -14,3 +14,4 @@ redis
 pytest
 httpx
 pytest-asyncio
+python-multipart

@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Security
 from fastapi.security import HTTPBearer
+from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from core.database import init_db
 from routes import coletas, health, motoristas, dashboard, auth
@@ -33,6 +34,21 @@ app = FastAPI(
             }
         }
     }
+)
+
+origins = [
+    "http://localhost:4200", 
+    "http://127.0.0.1:4200",
+    "http://localhost",       
+    "http://127.0.0.1",       
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"], 
+    allow_headers=["*"], 
 )
 
 def format_timedelta_to_friendly_string(seconds: int) -> str:
