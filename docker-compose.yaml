@@ -77,6 +77,15 @@ services:
     command: >
       /bin/sh -c "sleep 15 && python -m pytest /app/tests/test_pipelines.py"
     
+  frontend:
+      build:
+        context: ./frontend
+        dockerfile: Dockerfile
+      restart: always
+      ports:
+        - "4200:4200"
+      depends_on:
+        - api
 volumes:
   postgres_data:
   redis_data: 
