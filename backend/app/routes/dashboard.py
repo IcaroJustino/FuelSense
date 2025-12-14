@@ -11,7 +11,10 @@ from models.kpis import (
     MediaPrecoCombustivel, 
     VolumeConsumidoVeiculo, 
     PrecoHistoricoResponse,
-    PostoRankingEstado
+    PostoRankingEstado,
+    VolumeTotalConsumido,
+    MaiorConsumidor,
+    ReceitaTotalEstimada
 )
 from core.cache_utils import cached_data
 
@@ -131,3 +134,75 @@ def get_ranking_coletas_por_estado(
     data_dicts = [row_to_dict(item) for item in ranking_coletas]
 
     return [PostoRankingEstado.model_validate(item) for item in data_dicts]
+
+@router.get(
+    "/volume-total-abastecimentos", 
+    response_model=VolumeTotalConsumido, 
+    summary="Calcula o volume total de combustível e o número total de abastecimentos."
+)
+@cached_data(cache_key_prefix="kpi_volume_total", ttl=3600) 
+def get_volume_total_e_abastecimentos(
+    current_user: CurrentUser,
+    db: Session = Depends(get_db)
+):
+    kpi_result = db.query(
+        func.sum(ColetaModel.volume_vendido).label('volume_total'),
+        func.count(ColetaModel.id).label('total_abastecimentos')
+    ).first()
+    
+    if kpi_result is None or kpi_result.volume_total is None:
+        return VolumeTotalConsumido(volume_total=0.00, total_abastecimentos=0)
+
+    data_dict = row_to_dict(kpi_result)
+    
+    return VolumeTotalConsumido.model_validate(data_dict)
+
+
+@router.get(
+    "/maior-consumidor", 
+    response_model=MaiorConsumidor, 
+    summary="Identifica o tipo de veículo com o maior volume total consumido."
+)
+@cached_data(cache_key_prefix="kpi_maior_consumidor", ttl=3600) 
+def get_maior_consumidor(
+    current_user: CurrentUser,
+    db: Session = Depends(get_db)
+):
+    maior_consumidor_row = (
+        db.query(
+            ColetaModel.tipo_veiculo,
+            func.sum(ColetaModel.volume_vendido).label('volume_total')
+        )
+        .group_by(ColetaModel.tipo_veiculo)
+        .order_by(desc('volume_total')) 
+        .first()
+    )
+
+    if maior_consumidor_row is None:
+        return MaiorConsumidor(tipo_veiculo="Nenhum", volume_total=0.00)
+
+    data_dict = row_to_dict(maior_consumidor_row)
+    return MaiorConsumidor.model_validate(data_dict)
+
+
+@router.get(
+    "/receita-total-estimada", 
+    response_model=ReceitaTotalEstimada, 
+    summary="Calcula a Receita Total Estimada (Soma do Preço de Venda * Volume Vendido)."
+)
+@cached_data(cache_key_prefix="kpi_receita_total", ttl=3600) 
+def get_receita_total_estimada(
+    current_user: CurrentUser,
+    db: Session = Depends(get_db)
+):
+    receita_calculada = (ColetaModel.preco_venda * ColetaModel.volume_vendido)
+    
+    kpi_result = db.query(
+        func.round(func.sum(receita_calculada), 2).label('receita_total')
+    ).first()
+
+    if kpi_result is None or kpi_result.receita_total is None:
+        return ReceitaTotalEstimada(receita_total=0.00)
+
+    data_dict = row_to_dict(kpi_result)
+    return ReceitaTotalEstimada.model_validate(data_dict)
