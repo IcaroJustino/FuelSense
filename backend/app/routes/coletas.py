@@ -6,6 +6,14 @@ from typing import List, Optional
 from core.database import get_db, ColetaModel 
 from core.authguard import CurrentUser 
 from models.coleta import ColetaCreate, ColetaUpdate, Coleta, FuelType, VehicleType
+from core.cache_utils import invalidate_dashboard_cache, set_last_update_timestamp
+
+DASHBOARD_CACHE_KEYS = [
+    "kpi_historico_preco", 
+    "kpi_media_preco", 
+    "kpi_volume_veiculo", 
+    "kpi_ranking_estado"
+]
 
 
 def row_to_dict(row):
@@ -32,6 +40,10 @@ def create_coleta(
     db_coleta = ColetaModel(**coleta.model_dump())
     db.add(db_coleta)
     db.commit()
+    
+    invalidate_dashboard_cache(DASHBOARD_CACHE_KEYS)
+    set_last_update_timestamp()
+    # -----------------------------
 
     query_select = [
         ColetaModel.id,
@@ -164,6 +176,9 @@ def update_coleta(
     db.commit()
     db.refresh(coleta)
     
+    invalidate_dashboard_cache(DASHBOARD_CACHE_KEYS)
+    set_last_update_timestamp()
+    
     query_select = [
         ColetaModel.id,
         ColetaModel.posto_identificador,
@@ -194,6 +209,11 @@ def delete_coleta(
     coleta = db.query(ColetaModel).filter(ColetaModel.id == coleta_id).first()
     if coleta is None:
         raise HTTPException(status_code=404, detail="Coleta não encontrada")
+    
     db.delete(coleta)
     db.commit()
+    
+    invalidate_dashboard_cache(DASHBOARD_CACHE_KEYS)
+    set_last_update_timestamp()
+    
     return

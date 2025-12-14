@@ -9,7 +9,7 @@ class User(BaseModel):
     coreid: str
 
     class Config:
-        from_attributes = True # Permite leitura de objetos SQLAlchemy
+        from_attributes = True
 
 # Schema para o Login
 class UserLogin(BaseModel):

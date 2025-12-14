@@ -1,4 +1,5 @@
 from pydantic import BaseModel,Field,condecimal
+from typing import Optional, List, Union
 from datetime import datetime,date
 from typing import List
 from models.coleta import FuelType, VehicleType
@@ -25,3 +26,10 @@ class PostoRankingEstado(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class DashboardStatus(BaseModel):
+    last_update_timestamp: Optional[int] = Field(None, description="Timestamp Unix da última ingestão de dados (UTC).")
+    last_update_datetime: Optional[datetime] = Field(None, description="Datetime formatado da última ingestão de dados.")
+    time_since_last_update_seconds: Optional[int] = Field(None, description="Tempo decorrido (em segundos) desde a última atualização.")
+    friendly_status: str = Field(..., description="Mensagem amigável de status (ex: 'Atualizado há 5 minutos').")
