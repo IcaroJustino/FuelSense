@@ -1,0 +1,89 @@
+<div class="flex items-center justify-center min-h-screen bg-gray-100 p-4">
+  <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-2xl border border-gray-200">
+    <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Acesso ao Sistema</h2>
+
+    <form (ngSubmit)="onLogin()" class="space-y-6">
+
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+        <input
+          id="email"
+          [(ngModel)]="credentials.email"
+          name="email"
+          required
+          type="email"
+          placeholder="seu.email@exemplo.com"
+          [disabled]="isLoading()"
+          class="w-full px-4 py-2 border rounded-lg focus:outline-none transition duration-150 ease-in-out
+               text-gray-900 bg-white placeholder-gray-400
+               focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+               "
+          [class.border-red-500]="hasError()"
+          [class.ring-red-500]="hasError()"
+        >
+        @if (hasError()) {
+          <p class="text-xs text-red-500 mt-1">Email ou senha incorretos.</p>
+        }
+      </div>
+
+      <div class="relative">
+        <label for="senha" class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
+        <input
+          id="senha"
+          [(ngModel)]="credentials.senha"
+          name="senha"
+          required
+          [type]="showPassword() ? 'text' : 'password'"
+          [disabled]="isLoading()"
+          class="w-full px-4 py-2 border rounded-lg focus:outline-none transition duration-150 ease-in-out
+               text-gray-900 bg-white
+               focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          [class.border-red-500]="hasError()"
+          [class.ring-red-500]="hasError()"
+        >
+        <button
+          type="button"
+          class="absolute inset-y-0 right-0 top-6 flex items-center pr-3 text-gray-500 hover:text-gray-700 focus:outline-none"
+          (click)="togglePasswordVisibility()"
+          [disabled]="isLoading()"
+          aria-label="Toggle password visibility"
+        >
+          <span class="text-xl">
+            {{ showPassword() ? '👁️' : '🔒' }}
+          </span>
+        </button>
+      </div>
+
+      <button
+        type="submit"
+        class="w-full flex items-center justify-center py-2 px-4 border border-transparent
+             rounded-lg shadow-sm text-sm font-medium text-white
+             bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+             transition duration-150 ease-in-out"
+        [disabled]="!credentials.email || !credentials.senha || isLoading()"
+      >
+        @if (isLoading()) {
+          <span class="animate-spin h-5 w-5 mr-3 border-b-2 border-white rounded-full"
+              role="status"
+              aria-hidden="true">
+          </span>
+          <span>Carregando...</span>
+        } @else {
+          <span>Entrar</span>
+        }
+      </button>
+    </form>
+
+    @if (toast()) {
+      <div class="fixed top-5 right-5 p-4 rounded-lg shadow-xl text-white transition-opacity duration-300"
+         [ngClass]="{
+          'bg-green-500': toast()?.type === 'success',
+          'bg-red-600': toast()?.type === 'error'
+         }"
+      >
+        <p class="font-semibold">{{ toast()?.message }}</p>
+      </div>
+    }
+
+  </div>
+</div>
