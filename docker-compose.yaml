@@ -66,18 +66,13 @@ services:
     depends_on:
       - db
       - api
-    
-    # ✅ VARIÁVEIS NECESSÁRIAS
+
     environment:
       API_HOST: api
       API_PORT: 8000
 
-    # 🔑 APENAS O VOLUME DOS TESTES:
-    # O código da API (main.py, rotas, etc.) é puxado da IMAGEM base.
-    # Apenas a pasta de testes é mapeada para que você possa editar e rodar o test_api.py.
     volumes:
       - ./backend/app/tests:/app/tests
-      # O código da aplicação /app não será mapeado.
 
     command: >
       /bin/sh -c "sleep 15 && python -m pytest /app/tests/test_pipelines.py"
