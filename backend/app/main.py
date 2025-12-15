@@ -86,7 +86,7 @@ def get_data_freshness_status(
         last_dt = datetime.fromtimestamp(last_ts)
         friendly_msg = format_timedelta_to_friendly_string(seconds_ago)
     else:
-        friendly_msg = "Nenhuma atualização de dados registrada recentemente (chave Redis vazia)."
+        friendly_msg = "Nenhuma atualização de dados registrada recentemente."
 
     return DashboardStatus(
         last_update_timestamp=last_ts,

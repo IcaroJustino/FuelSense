@@ -2,12 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
-import { LoginPayload } from '../../interfaces/auth.interfaces';
-
-export interface Toast {
-  message: string;
-  type: 'success' | 'error';
-}
+import { LoginPayload, Toast } from '../../interfaces/auth.interfaces';
 
 @Component({
   selector: 'app-loginpage',

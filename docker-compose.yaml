@@ -51,7 +51,7 @@ services:
       REDIS_PORT: 6379    
 
       SECRET_KEY: SUA_CHAVE_SECRETA_MUITO_LONGA_E_ALEATORIA
-      ACCESS_TOKEN_EXPIRE_MINUTES: 30 
+      ACCESS_TOKEN_EXPIRE_MINUTES: 10080 
       
     depends_on:
       db:

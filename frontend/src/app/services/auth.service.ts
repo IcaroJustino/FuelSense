@@ -12,14 +12,12 @@ const TOKEN_KEY = 'auth_token';
 })
 export class AuthService {
   private http = inject(HttpClient);
-  // Mantido como 'private' para encapsulamento:
   private router = inject(Router);
   private platformId = inject(PLATFORM_ID);
   private isBrowser = isPlatformBrowser(this.platformId);
 
   private apiUrl = 'http://localhost:8000/api/v1';
 
-  // NOVO MÉTODO PÚBLICO: Permite que outros componentes naveguem sem acessar a propriedade privada 'router'.
   public redirectToDashboard(): void {
     this.router.navigate(['/dashboard']);
   }
@@ -39,7 +37,7 @@ export class AuthService {
       .pipe(
         tap((response) => {
           this.saveToken(response.access_token);
-          this.redirectToDashboard(); // ✅ Chama o método público
+          this.redirectToDashboard();
         })
       );
   }

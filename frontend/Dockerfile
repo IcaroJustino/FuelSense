@@ -4,7 +4,8 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+##legac6y-peer-deps flag para o chart js
+RUN npm install --legacy-peer-deps
 
 COPY . .
 
