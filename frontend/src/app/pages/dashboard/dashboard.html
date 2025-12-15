@@ -1,1 +1,222 @@
-<p>dashboard works!</p>
+<div class="bg-[#f0f4f8] min-h-screen mx-auto mt-2 p-4">
+
+    <section class="bg-[#ffffff] border border-gray-300 p-4 sm:p-6 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4">
+
+        <div class="flex items-center mb-3 sm:mb-0">
+            <div class="bg-[#e0e7ff] p-2 sm:p-3 rounded-lg mr-3 sm:mr-4 text-[#4f46e5]">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-fuel-pump" viewBox="0 0 16 16">
+                    <path d="M3 0a1 1 0 0 0-1 1v1H1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h1v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h1a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H3V1a1 1 0 0 0-1-1zM2 1h1v1H2V1zm1 12H2v-1h1v1zm1-2H2V3h1v8zm1-8h1v8H4V3zm8 0h-1v8h1V3zm-1-1a1 1 0 0 0-1 1v1h-1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h1v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h1a1 1 0 0 0 1-1V3a1 1 0 0 0-1-2h-1V1a1 1 0 0 0-1-1h-1z"/>
+                </svg>
+            </div>
+            <div class="flex flex-col">
+                <h1 class="text-xl sm:text-2xl font-bold text-[#000000]">Dashboard de Monitoramento</h1>
+                <span class="text-sm text-gray-500">Ministério dos Transportes</span>
+            </div>
+        </div>
+
+        <div class="flex lg:flex-row flex-col items-center gap-2 sm:gap-4 w-full justify-between sm:w-auto sm:justify-start">
+
+            <div class="flex items-center gap-1 sm:gap-2 text-gray-600 flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                </svg>
+
+                @if (isStatusLoading) {
+                    <span class="text-xs sm:text-sm w-fit">Status: <span class="font-semibold animate-pulse">Carregando...</span></span>
+                } @else {
+                    <span class="text-xs sm:text-sm w-fit">{{ dataStatus }}</span>
+                }
+            </div>
+
+            <button (click)="onLogout()"
+                    class="flex items-center bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-3 sm:px-4 rounded-lg text-xs sm:text-sm transition duration-150 ease-in-out shadow-md cursor-pointer whitespace-nowrap flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-right mr-1 sm:mr-2" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 1 0v-3A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-3a.5.5 0 0 0-1 0v3z"/>
+                    <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
+                </svg>
+                Sair
+            </button>
+        </div>
+    </section>
+
+    <section id="filterSection" class="bg-[#ffffff] border border-gray-300 rounded-lg flex flex-col mb-4 p-4 sm:p-6
+        md:sticky md:top-0 md:z-50 md:shadow-lg">
+        <div class="mb-5 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-funnel text-gray-600" viewBox="0 0 16 16">
+                <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.459l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2z"/>
+            </svg>
+            <h2 class="text-lg font-semibold text-[#000000]">Filtros da API</h2>
+        </div>
+        <div class="rounded-lg flex flex-col md:flex-row gap-4">
+
+            <div class="flex flex-col w-full">
+                <label class="text-sm font-semibold text-[#000000] mb-1">Tipo de Combustível</label>
+                <select
+                    class="flex-1 border border-gray-300 rounded-lg p-2 text-[#000000] w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    [(ngModel)]="fuelFilter"
+                    (ngModelChange)="onFilterChange()">
+                    <option value="todos">Todos</option>
+                    <option value="Gasolina">Gasolina</option>
+                    <option value="Diesel S10">Diesel S10</option>
+                    <option value="Etanol">Etanol</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <ol class="list-none grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <li class="bg-[#ffffff] border border-gray-300 p-4 rounded-lg flex items-center gap-4">
+                <div class="bg-[#e0e7ff] p-3 rounded-lg shrink-0 text-[#4f46e5]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-fuel-pump" viewBox="0 0 16 16"><path d="M3 0a1 1 0 0 0-1 1v1H1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h1v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h1a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1H3V1a1 1 0 0 0-1-1zM2 1h1v1H2V1zm1 12H2v-1h1v1zm1-2H2V3h1v8zm1-8h1v8H4V3zm8 0h-1v8h1V3zm-1-1a1 1 0 0 0-1 1v1h-1a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h1v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h1a1 1 0 0 0 1-1V3a1 1 0 0 0-1-2h-1V1a1 1 0 0 0-1-1h-1z"/></svg>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-sm font-semibold text-[#000000]">Preço Médio - Gasolina</span>
+                    @if (isFuelAveragesLoading) {
+                        <p class="text-lg font-bold text-gray-500 animate-pulse">Carregando...</p>
+                    } @else {
+                        <p class="text-lg font-bold text-[#000000]">R$ {{ fuelAverages['Gasolina'] }}</p>
+                    }
+                </div>
+            </li>
+
+            <li class="bg-[#ffffff] border border-gray-300 p-4 rounded-lg flex items-center gap-4">
+                <div class="bg-[#e0e7ff] p-3 rounded-lg shrink-0 text-[#4f46e5]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-graph-up" viewBox="0 0 16 16"><path d="M0 0h1v15h15v1H0z"/><path d="M14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L9.5 9.499l-3.396 4.405a.5.5 0 0 1-.74.037L1 6.41V13a.5.5 0 0 1-1 0V3.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .478.647l-2 5a.5.5 0 0 1-.933-.068l1.853-4.633 3.477 4.248a.5.5 0 0 1 .74-.037l4.5-5.5a.5.5 0 0 1 .704.07z"/></svg>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-sm font-semibold text-[#000000]">Preço Médio - Etanol</span>
+                    @if (isFuelAveragesLoading) {
+                        <p class="text-lg font-bold text-gray-500 animate-pulse">Carregando...</p>
+                    } @else {
+                        <p class="text-lg font-bold text-[#000000]">R$ {{ fuelAverages['Etanol'] }}</p>
+                    }
+                </div>
+            </li>
+
+            <li class="bg-[#ffffff] border border-gray-300 p-4 rounded-lg flex items-center gap-4">
+                <div class="bg-[#e0e7ff] p-3 rounded-lg shrink-0 text-[#4f46e5]">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-bar-chart" viewBox="0 0 16 16"><path d="M4 11H2v3h2v-3zm5-4H7v7h2V7zm5-5v12h2V2h-2zm-2 5H9v7h2v-7z"/></svg>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-sm font-semibold text-[#000000]">Preço Médio - Diesel S10</span>
+                    @if (isFuelAveragesLoading) {
+                        <p class="text-lg font-bold text-gray-500 animate-pulse">Carregando...</p>
+                    } @else {
+                        <p class="text-lg font-bold text-[#000000]">R$ {{ fuelAverages['Diesel S10'] }}</p>
+                    }
+                </div>
+            </li>
+        </ol>
+
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div class="bg-[#ffffff] border border-gray-300 p-6 rounded-lg flex flex-col">
+                <h3 class="text-lg font-semibold text-[#000000] mb-4">Receita Total Estimada</h3>
+                @if (isTotalRevenueLoading) {
+                    <p class="font-bold mb-4 text-gray-500 animate-pulse">Carregando...</p>
+                } @else {
+                    <p class="text-lg font-bold text-[#000000] mb-4">R$ {{ formattedTotalRevenue }}</p>
+                }
+                <span class="text-sm text-gray-500 font-light">Baseado nos abastecimentos registrados</span>
+            </div>
+
+            <div class="bg-[#ffffff] border border-gray-300 p-6 rounded-lg flex flex-col">
+                <h3 class="text-lg font-semibold text-[#000000] mb-4">Maior Consumidor</h3>
+
+                @if (isTopConsumerLoading) {
+                    <p class="text-sm text-gray-600 mb-2 animate-pulse">Carregando veículo...</p>
+                    <span class="text-lg font-semibold text-gray-500 mb-0 animate-pulse">*** L</span>
+                } @else {
+                    <p class="text-sm text-gray-600 mb-2">{{ topConsumer.tipo_veiculo }}</p>
+                    <span class="text-lg font-semibold text-[#000000] mb-0">{{ formattedTopVolume }} L</span>
+                }
+            </div>
+        </section>
+    </section>
+    <div class="flex flex-col md:flex-row w-full gap-4 mb-4">
+        <section class="w-full md:w-1/3 bg-[#ffffff] border border-gray-300 rounded-lg flex flex-col">
+            <h3 class="text-xl font-semibold text-[#000000] mb-4 p-4">Distribuição de Consumo por Tipo de Veículo</h3>
+
+            @if (isConsumptionLoading) {
+                <div class="flex items-center justify-center h-48 text-gray-500">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    Carregando dados de consumo...
+                </div>
+            }
+            @if (consumptionData && !isConsumptionLoading) {
+                <app-pie-chart [data]="consumptionData" [height]="300"></app-pie-chart>
+            }
+        </section>
+
+        <section class="w-full md:w-2/3 bg-[#ffffff] border border-gray-300 rounded-lg flex flex-col p-4">
+            <h3 class="text-xl font-semibold text-[#000000] mb-4 p-4">Evolução dos Preços por Combustível</h3>
+
+            @if (isLoading) {
+                <div class="flex items-center justify-center h-80 text-gray-500">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    Carregando dados...
+                </div>
+            }
+            @if (priceEvolutionData && !isLoading) {
+                <div style="height: 350px;" class="p-4">
+                    <app-line-chart [data]="priceEvolutionData"></app-line-chart>
+                </div>
+            }
+        </section>
+    </div>
+
+    <section class="grid grid-cols-1 gap-4">
+        <div class="bg-white border border-gray-300 p-4 sm:p-6 rounded-lg shadow-md flex flex-col">
+
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-800 mb-2 sm:mb-0">📜 Histórico de Abastecimentos</h3>
+
+                <div class="flex items-center space-x-3 w-full sm:w-64">
+                    <div class="relative w-full">
+                        <input type="text" placeholder="Buscar motorista, posto, placa..."
+                                [(ngModel)]="searchTerm"
+                                (ngModelChange)="onSearchChange()"
+                                class="border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 w-full pr-10">
+
+                        <button class="absolute right-0 top-0 h-full px-3 text-gray-400 hover:text-gray-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.397l3.864 3.864a1 1 0 0 0 1.414-1.414l-3.864-3.864zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <app-historical-table
+                [records]="(historicalRecords$ | async) ?? []"
+                [isLoading]="isTableLoading"
+            ></app-historical-table>
+
+            <div class="flex flex-col sm:flex-row justify-between items-center mt-4">
+
+                <span class="text-sm text-gray-600 mb-2 sm:mb-0">
+                    Página {{ currentPage }} de (Estimativa: {{ totalPages }})
+                </span>
+
+                <div class="flex space-x-1">
+                    <button class="px-3 py-1 text-sm border rounded-lg text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+                            [disabled]="currentPage === 1 || isTableLoading"
+                            (click)="onPageChange(currentPage - 1)">&lt;</button>
+
+                    @for (i of [].constructor(totalPages); track index; let index = $index) {
+                        <button class="px-3 py-1 text-sm border rounded-lg hidden sm:block"
+                                [ngClass]="{'bg-blue-600 text-white': index + 1 === currentPage, 'text-gray-700 hover:bg-gray-100': index + 1 !== currentPage}"
+                                (click)="onPageChange(index + 1)">
+                            {{ index + 1 }}
+                        </button>
+                    }
+
+                    <button class="px-3 py-1 text-sm border rounded-lg text-gray-700 hover:bg-gray-100 disabled:opacity-50"
+                            [disabled]="(historicalRecords$ | async)?.length !== pageSize || isTableLoading"
+                            (click)="onPageChange(currentPage + 1)">&gt;</button>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
